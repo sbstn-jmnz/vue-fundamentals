@@ -36,18 +36,9 @@ Vue.component('product', {
     <button class="btn btn-info" :disabled="!inStock" v-on:click="addToCart">Agregar al Carro</button>
     <button class="btn btn-warning" v-on:click="removeFromCart">Sacar del Carro</button>
     
-    <div class="mt-5">
-    <h2>Reviews</h2>
-    <p v-if="!reviews.length">Aún no hay reviews.</p>
-    <ul>
-      <li v-for="review in reviews">
-      <p>{{ review.name }}</p>
-      <p>Rating: {{ review.rating }}</p>
-      <p>{{ review.review }}</p>
-      </li>
-    </ul>
-   </div>
-    <product-review @review-submitted="addReview"></product-review>
+    <div class="mt-3">
+    <product-tabs :reviews="reviews"></product-tabs>  
+    </div>
     </div>
 </div>`,
   data() {
@@ -191,6 +182,39 @@ Vue.component('product-review', {
   }
 })
 
+Vue.component('product-tabs', {
+  props: {
+    reviews: {
+      type: Array,
+      required: true
+    }
+  },
+  template: `
+  <div>
+  <ul class="nav nav-tabs">
+  <li v-for="(tab,index) in tabs" :key="index" class="nav-item">
+    <a class="nav-link" :class="{ active: selectedTab === tab }" href="#" @click.prevent="selectedTab = tab">{{tab}}</a>
+  </li>
+</ul>
+<div v-show="selectedTab == 'Reviews'">
+<h2>Reviews</h2>
+    <p v-if="reviews.length == 0">Aún no hay reviews.</p>
+    <ul v-else >
+      <li class="list-item" v-for="review in reviews">
+      <p>Usuario: {{ review.name }} | Rating: {{ review.rating }}</p>
+      <p>Comentario: {{ review.review }}</p>
+      </li>
+    </ul>
+</div>
+    <product-review v-show="selectedTab == 'Hacer review'" @review-submitted="addReview"></product-review>
+</div>`,
+  data() {
+    return {
+      tabs: ['Reviews', 'Hacer review'],
+      selectedTab: 'Reviews'
+    }
+  }
+})
 
 
 var app = new Vue({
