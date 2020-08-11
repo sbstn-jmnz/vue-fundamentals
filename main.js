@@ -3,15 +3,20 @@ Vue.component('product', {
     premium: {
       type: Boolean,
       required: true
+    },
+    cart: {
+      type: Array,
+      required: true
     }
   },
   template: `<div class="row pt-5">
-  <div class="col">
+  <div class="col-12 col-md-6">
     <img :src="img" alt="" class="img-thumbnail">
   </div>
-  <div class="col">
+  <div class="col-12 col-md-6">
     <h1>{{ product }}</h1>
     <p>{{ description }}</p>
+    <p>Stock: {{ stock }}</p>
     <p v-if="stock > 10" :class="">In Stock</p>
     <p v-else-if="stock <=10 && stock > 0">Quedan muy pocos</p>
     <p v-else>Out of Stock</p>
@@ -27,13 +32,13 @@ Vue.component('product', {
     </select>
     </div>
     <a :href="link">Ver detalle</a>
-    <p>{{ shipping }}</p>
+    <p>Envío: {{ shipping }}</p>
     <button class="btn btn-info" :disabled="!inStock" v-on:click="addToCart">Agregar al Carro</button>
-    <button class="btn btn-warning" :disabled="!inStock" v-on:click="removeFromCart">Sacar del Carro</button>
-    <div>
-
+    <button class="btn btn-warning" v-on:click="removeFromCart">Sacar del Carro</button>
+    
+    <div class="mt-5">
     <h2>Reviews</h2>
-    <p v-if="!reviews.length">There are no reviews yet.</p>
+    <p v-if="!reviews.length">Aún no hay reviews.</p>
     <ul>
       <li v-for="review in reviews">
       <p>{{ review.name }}</p>
@@ -42,7 +47,6 @@ Vue.component('product', {
       </li>
     </ul>
    </div>
-    
     <product-review @review-submitted="addReview"></product-review>
     </div>
 </div>`,
@@ -74,10 +78,15 @@ Vue.component('product', {
   },
   methods: {
     addToCart() {
-      this.$emit("add-to-cart", this.selectedVariant.variantId)
+      this.selectedVariant.quantity -= 1
+      this.$emit("add-to-cart", this.selectedVariant)
     },
     removeFromCart() {
-      this.$emit("remove-from-cart", this.selectedVariant.variantId)
+      var variantInCart = this.cart.filter(variant => variant == this.selectedVariant)
+      if (variantInCart.length > 0) {
+        this.selectedVariant.quantity += 1
+        this.$emit("remove-from-cart", this.selectedVariant)
+      }
     },
     updateProduct(variant) {
       this.selectedVariant = variant
@@ -101,7 +110,7 @@ Vue.component('product', {
     },
     shipping() {
       if (this.premium || this.selectedVariant.variantType == 'pdf') {
-        return 'Gratis'
+        return 'gratis'
       } else {
         return "$2.600"
       }
@@ -116,23 +125,27 @@ Vue.component('product', {
 Vue.component('product-review', {
   template: `
   <div>
-  <p v-if="errors.length">
+  <div v-if="errors.length" class="alert alert-warning  alert-dismissible" role="alert">
+  <p>
   <b>Por favor corregir los siguientes errores:</b>
   <ul>
     <li v-for="error in errors">{{ error }}</li>
   </ul>
-</p>
-  <form class="form-group mt-5" @submit.prevent="onSubmit">
+  </p>
+  <button type="button" @click="errors = []" class="close" data-dismiss="alert" aria-label="Close">
+    <span aria-hidden="true">&times;</span>
+  </button>
+  </div>
+  <h4>Agregar Review</h4>
+  <form class="form-group mt-2" @submit.prevent="onSubmit">
   <p>
     <label for="name">Nombre:</label>
-    <input id="name" v-model="name" placeholder="nombre">
+    <input id="name" v-model="name" placeholder="Nombre" class="form-control">
   </p>
-  
   <p>
     <label for="review">Review:</label>      
-    <textarea id="review" v-model="review"></textarea>
+    <textarea id="review" v-model="review" class="form-control" placeholder="Review"></textarea>
   </p>
-  
   <p>
     <label for="rating">Rating:</label>
     <select id="rating" v-model.number="rating">
@@ -143,11 +156,9 @@ Vue.component('product-review', {
       <option>1</option>
     </select>
   </p>
-      
   <p>
-    <input type="submit" value="Submit">  
+    <input type="submit" class="btn btn-warning" value="Enviar">  
   </p>    
-
 </form>
 </div>`,
   data() {
@@ -171,29 +182,46 @@ Vue.component('product-review', {
           this.review = null,
           this.rating = null
       } else {
-        if (!this.name) this.errors.push("Name required.")
-        if (!this.review) this.errors.push("Review required.")
-        if (!this.rating) this.errors.push("Rating required.")
+        if (!this.name) this.errors.push("El nombre es requerido.")
+        if (!this.review) this.errors.push("El contenido de review no puede estar vacío.")
+        if (!this.rating) this.errors.push("Debes entregar un valor para el rating.")
       }
     }
 
   }
 })
 
+
+
 var app = new Vue({
   el: '#app',
   data: {
     cart: [],
-    premium: false
+    premium: true,
+    showStyle: {
+      display: "block",
+      "padding-right": "16px",
+      "padding-top": "20px"
+    },
+    displayCart: false
   },
   methods: {
-    addToCart(id) {
-      this.cart.push(id)
+    addToCart(variant) {
+      this.cart.push(variant)
     },
-    removeFromCart(id) {
-      let index = this.cart.indexOf(id)
+    removeFromCart(variant) {
+      let index = this.cart.indexOf(variant)
       if (index > -1) {
         this.cart.splice(index, 1)
+      }
+    }
+  },
+  computed: {
+    modalStyle() {
+      if (this.displayCart) {
+        return this.showStyle
+      } else {
+        return {}
       }
     }
   }
