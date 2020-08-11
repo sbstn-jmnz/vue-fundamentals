@@ -20,9 +20,6 @@ Vue.component('product', {
     <p v-if="stock > 10" :class="">In Stock</p>
     <p v-else-if="stock <=10 && stock > 0">Quedan muy pocos</p>
     <p v-else>Out of Stock</p>
-    <ul>
-      <li v-for='detail in details'> {{ detail }}</li>
-    </ul>
     <div class="input-group mb-3">
     <div class="input-group-prepend">
       <label class="input-group-text" for="inputGroupSelect01">Variante</label>
@@ -31,13 +28,12 @@ Vue.component('product', {
       <option v-for="variant in variants" :value="variant":key="variant.variantId">{{variant.variantType}}</option>
     </select>
     </div>
-    <a :href="link">Ver detalle</a>
     <p>Envío: {{ shipping }}</p>
     <button class="btn btn-info" :disabled="!inStock" v-on:click="addToCart">Agregar al Carro</button>
     <button class="btn btn-warning" v-on:click="removeFromCart">Sacar del Carro</button>
     
     <div class="mt-3">
-    <product-tabs :reviews="reviews"></product-tabs>  
+    <product-tabs :reviews="reviews" :shipping="shipping" :details='details'></product-tabs>  
     </div>
     </div>
 </div>`,
@@ -46,7 +42,6 @@ Vue.component('product', {
       selectedVariant: {},
       product: 'Longaniza de Brocolli',
       description: 'Viscosas pero sabrosas',
-      link: './printed_book.html',
       details: ['Tapa dura', '487 páginas', '458gr'],
       variants: [
         {
@@ -81,10 +76,12 @@ Vue.component('product', {
     },
     updateProduct(variant) {
       this.selectedVariant = variant
-    },
-    addReview(productReview) {
-      this.reviews.push(productReview)
     }
+  },
+  mounted() {
+    eventBus.$on('review-submitted', productReview => {
+      this.reviews.push(productReview)
+    })
   },
   computed: {
     inStock() {
@@ -168,7 +165,7 @@ Vue.component('product-review', {
           review: this.review,
           rating: this.rating
         }
-        this.$emit("review-submitted", productReview)
+        eventBus.$emit("review-submitted", productReview)
         this.name = null,
           this.review = null,
           this.rating = null
@@ -182,9 +179,18 @@ Vue.component('product-review', {
   }
 })
 
+
 Vue.component('product-tabs', {
   props: {
     reviews: {
+      type: Array,
+      required: true
+    },
+    shipping: {
+      type: String,
+      required: true
+    },
+    details: {
       type: Array,
       required: true
     }
@@ -206,16 +212,45 @@ Vue.component('product-tabs', {
       </li>
     </ul>
 </div>
-    <product-review v-show="selectedTab == 'Hacer review'" @review-submitted="addReview"></product-review>
+    <product-review v-show="selectedTab == 'Hacer review'"></product-review>
+    <product-shipping v-show="selectedTab == 'Envío'" :shipping="shipping"></product-shipping>
+    <product-details v-show="selectedTab == 'Detalles'" :details='details'></product-details>
 </div>`,
   data() {
     return {
-      tabs: ['Reviews', 'Hacer review'],
+      tabs: ['Reviews', 'Hacer review', 'Envío', 'Detalles'],
       selectedTab: 'Reviews'
     }
   }
 })
 
+Vue.component('product-shipping', {
+  props: {
+    shipping: {
+      type: String,
+      required: true
+    }
+  },
+  template: `<div>
+    <p>{{ shipping }}</p>
+  </div>`
+})
+
+Vue.component('product-details', {
+  props: {
+    details: {
+      type: Array,
+      required: true
+    }
+  },
+  template: `<div>
+    <ul>
+      <li v-for='detail in details'> {{ detail }}</li>
+    </ul>
+  </div>`
+})
+
+var eventBus = new Vue()
 
 var app = new Vue({
   el: '#app',
