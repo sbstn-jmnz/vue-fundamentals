@@ -10,38 +10,17 @@
 </head>
 
 <body>
-  <nav class="navbar navbar-dark bg-info">
-    <span class="navbar-brand mb-0 h1">Hello Vue</span>
-  </nav>
-  <div class="container">
-    <div id='app'>
-      <div class="row pt-5">
-        <div class="col">
-          <img :src="img" alt="" class="img-thumbnail">
-        </div>
-        <div class="col">
-          <h1>{{ product }}</h1>
-          <p>{{ description }}</p>
-          <p v-if="onSale">Producto Rebajado</p>
-          <p v-if="stock > 10" :class="">In Stock</p>
-          <p v-else-if="stock < 10 && stock > 0">Quedan muy pocos</p>
-          <p v-else>Out of Stock</p>
-          <ul>
-            <li v-for='detail in details'> {{ detail }}</li>
-          </ul>
-
-          <div v-for="variant in variants" :key="variant.variantId">
-            <p @mouseover="updateImg(variant.img)">{{ variant.variantType}}</p>
-          </div>
-          <a :href="link">Ver detalle</a>
-          <div class='cart'>
-            <p>Cart {{cart}}</p>
-          </div>
-          <button class="btn btn-info" :disabled="!inStock" v-on:click="addToCart">Agregar al Carro</button>
-          <button class="btn btn-warning" :disabled="!inStock" v-on:click="removeFromCart">Sacar del Carro</button>
-
-        </div>
-      </div>
+  <div id='app'>
+    <nav class="navbar navbar-dark bg-info">
+      <span class="navbar-brand mb-0 h1">Hello Vue</span>
+      <ul class="navbar-nav ml-auto">
+        <li class='nav-item text-white'>
+          Cart {{cart.length}}
+        </li>
+      </ul>
+    </nav>
+    <div class="container">
+      <product :premium='premium' @add-to-cart="addToCart" @remove-from-cart="removeFromCart"></product>
     </div>
   </div>
   <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
